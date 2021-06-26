@@ -6,12 +6,13 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.android.synthetic.main.activity_face_detection.*
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -58,12 +59,34 @@ class FaceDetectionActivity : AppCompatActivity() {
     private fun bindCapture(cameraProvider: ProcessCameraProvider, preview: Preview) {
         val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
+        val realTimeOpts = FaceDetectorOptions.Builder()
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .build()
+        val detector = FaceDetection.getClient(realTimeOpts)
+
+        val imageAnalyzer = ImageAnalysis.Builder()
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, FaceDetectionAnalyser { inputImage, imageProxy ->
+                        val result = detector.process(inputImage)
+                                .addOnSuccessListener { faces ->
+                                    Log.d("Faces", faces.size.toString())
+                                    imageProxy.close()
+                                }
+                                .addOnFailureListener { e ->
+                                    e.printStackTrace()
+                                }
+
+
+                    })
+                }
+
         //Check if imageCapture is not null and Provide feedback if null
         try {
             imageCapture?.let {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview, imageCapture)
+                        this, cameraSelector, preview, imageCapture, imageAnalyzer)
             } ?: kotlin.run {
                 Toast.makeText(this,
                         getString(R.string.error_image_capture),
@@ -118,3 +141,5 @@ class FaceDetectionActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }
+
+typealias AnalyzerListener = (inputImage: InputImage, imageProxy: ImageProxy) -> Unit
