@@ -2,4 +2,5 @@
     <string name="app_name">FaceDetectionExample</string>
     <string name="error_permisson_not_granted">Permissions not granted by the user.</string>
     <string name="error_image_capture">Failed to locate image capturer</string>
+    <string name="title_detected_faces">Detected Faces:</string>
 </resources>
