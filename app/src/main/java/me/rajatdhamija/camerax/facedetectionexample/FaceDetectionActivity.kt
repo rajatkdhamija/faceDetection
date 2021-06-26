@@ -64,6 +64,7 @@ class FaceDetectionActivity : AppCompatActivity() {
     }
 
     private fun takePhoto() {
+        Toast.makeText(baseContext, "Capturing Image...", Toast.LENGTH_SHORT).show()
         val imageCapture = imageCapture ?: return
         val photoFile = File(
             outputDirectory,
